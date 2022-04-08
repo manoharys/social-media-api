@@ -34,3 +34,41 @@ exports.register = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.login = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User does not exist",
+      });
+    }
+
+    const isMatch = await user.comparePassword(req.body.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect password",
+      });
+    }
+
+    const token = await user.generateToken();
+
+    res
+      .status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      })
+      .json({
+        success: true,
+        message: "User logged in successfully",
+        token,
+      });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

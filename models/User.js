@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -14,7 +15,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password is required"],
-    minlength: [6, "Password must be at least 5 characters"],
+    minlength: [6, "Password must be at least 6 characters"],
   },
   avatar: {
     public_id: String,
@@ -54,5 +55,22 @@ userSchema.pre("save", async function (next) {
     next(err);
   }
 });
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+userSchema.methods.generateToken = async function () {
+  try {
+    const token = await jwt.sign({ id: this._id }, process.env.JWT_SECRET);
+    return token;
+  } catch (err) {
+    throw new Error(err);
+  }
+};
 
 module.exports = mongoose.model("User", userSchema);
