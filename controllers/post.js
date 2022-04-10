@@ -37,7 +37,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
-// @route GET api/posts
+// @route POST api/posts
 // @desc likeAndUnlike a post
 // @access private
 
@@ -74,6 +74,97 @@ exports.likeAndUnlike = async (req, res) => {
     res.status(500).json({
       success: false,
       message: err.message,
+    });
+  }
+};
+
+// @route DELETE api/posts/:id
+// @desc Delete a post
+// @access Private
+
+exports.deletePost = async (req, res) => {
+  try {
+    const post = await Post.findOne({ _id: ObjectId(req.params.id) }).exec();
+
+    // check post exists
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // check user is owner of post
+    if (post.owner.toString() !== req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "you are not authorized to delete this post",
+      });
+    }
+
+    // delete post
+    await post.remove();
+
+    // remove from owners list of posts
+    const user = await User.findById(req.user.id);
+    user.post;
+    user.posts = user.posts.filter((id) => id.toString() !== post.id);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @route POST api/posts/comment/:id
+// @desc Add a comment to a post
+// @access Private
+
+exports.commentPost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const commentText = req.body.text;
+
+    if (commentText.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Comment cannot be empty",
+      });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(401).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    const newComment = {
+      text: commentText,
+      user: req.user.id,
+    };
+
+    post.comments.push(newComment);
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Comment added successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 };
