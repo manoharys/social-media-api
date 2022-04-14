@@ -168,3 +168,27 @@ exports.commentPost = async (req, res) => {
     });
   }
 };
+
+// @route GET api/posts
+// @desc Get a post
+// @access Private
+
+exports.getPostOfFollowing = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    const posts = await Post.find({
+      owner: { $in: user.following },
+    });
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};

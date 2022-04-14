@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
+require("dotenv").config();
 
-const databaseUrl =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/socailMedia";
+const databaseUrl = process.env.MONGODB_URI;
 
 const connectDb = async () => {
   try {

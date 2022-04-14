@@ -73,6 +73,38 @@ exports.login = async (req, res) => {
   }
 };
 
+// @route POST api/users/logout
+// @desc Logout user
+
+exports.logoutUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).exec();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res
+      .status(200)
+      .cookie("token", null, {
+        httpOnly: true,
+        expires: new Date(Date.now()),
+      })
+      .json({
+        success: true,
+        message: "User logged out successfully",
+      });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @route POST api/users/followUnfollow
 // @desc Follow or Unfollow user
 // @access Private
